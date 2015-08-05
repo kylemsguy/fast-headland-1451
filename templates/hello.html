@@ -6,34 +6,20 @@
 <body>
 <div class="container">
     <div class="row">
-        <form role="form" action="/upload/">
+        <form role="form" action="/upload/" method="post" enctype="multipart/form-data">
             <div class="col-lg-6">
                 <div class="well well-sm"><strong><span class="glyphicon glyphicon-asterisk"></span>Required Field</strong></div>
                 <div class="form-group">
-                    <label for="InputName">Enter Name</label>
+                    <label for="PackageName">Enter Desired Package Name</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" name="InputName" id="InputName" placeholder="Enter Name" required>
+                        <input type="text" class="form-control" name="PackageName" id="InputName" placeholder="Enter Desired Package Name" required>
                         <span class="input-group-addon"><span class="glyphicon glyphicon-asterisk"></span></span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="InputEmail">Enter Email</label>
+                    <label for="File">Upload File</label>
                     <div class="input-group">
-                        <input type="email" class="form-control" id="InputEmailFirst" name="InputEmail" placeholder="Enter Email" required>
-                        <span class="input-group-addon"><span class="glyphicon glyphicon-asterisk"></span></span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="InputEmail">Confirm Email</label>
-                    <div class="input-group">
-                        <input type="email" class="form-control" id="InputEmailSecond" name="InputEmail" placeholder="Confirm Email" required>
-                        <span class="input-group-addon"><span class="glyphicon glyphicon-asterisk"></span></span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="InputMessage">Enter Message</label>
-                    <div class="input-group">
-                        <textarea name="InputMessage" id="InputMessage" class="form-control" rows="5" required></textarea>
+                        <input type="file" class="form-control" id="InputFile" name="File" placeholder="Upload File" required>
                         <span class="input-group-addon"><span class="glyphicon glyphicon-asterisk"></span></span>
                     </div>
                 </div>

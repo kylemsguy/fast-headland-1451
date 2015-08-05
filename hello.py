@@ -12,7 +12,7 @@ from common import install_secret_key
 from common import UploadedFile
 
 # Global variables
-
+current_files = {}
 
 # Main app instance
 app = Flask(__name__)
@@ -27,10 +27,14 @@ def hello():
 @app.route('/upload/', methods=['GET', 'POST'])
 def upload_apk():
     if request.method == "POST":
+        package_name = request.form['PackageName']
         unique_filename = uuid.uuid4().urn[9:]
         f = request.files['File']
         f.save('tmp/' + unique_filename + '.apk')
         session['last_file'] = unique_filename
+        filerec_obj = UploadedFile(unique_filename, package_name)
+        current_files[unique_filename] = filerec_obj
+        # spin new thread and run modify_package_name
         return render_template('file_uploaded.html', filename=unique_filename)
     else:
         return redirect('/', code=302)

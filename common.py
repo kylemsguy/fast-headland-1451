@@ -13,6 +13,9 @@ class UploadedFile:
     def get_uuid(self):
         return self._uuid
 
+    def get_package_name(self):
+        return self._package_name
+
     def get_status(self):
         return self._status
 

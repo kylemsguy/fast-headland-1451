@@ -1,0 +1,47 @@
+<?xml version="1.0" ?>
+<manifest android:versionCode="9" android:versionName="1.4a" package="com.kylemsguy.tcasmobile" platformBuildVersionCode="22" platformBuildVersionName="5.1.1-1819727" xmlns:android="http://schemas.android.com/apk/res/android">
+	
+
+	<uses-sdk android:minSdkVersion="9" android:targetSdkVersion="22">
+</uses-sdk>
+	
+
+	<uses-permission android:name="android.permission.INTERNET">
+</uses-permission>
+	
+
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE">
+</uses-permission>
+	
+
+	<application android:allowBackup="true" android:icon="@7F020042" android:label="@7F0A0017" android:name="com.kylemsguy.tcasmobile.TCaSApp" android:theme="@7F0B0005">
+		
+
+		<activity android:label="@7F0A0017" android:name="com.kylemsguy.tcasmobile.LoginActivity" android:windowSoftInputMode="0x00000014">
+			
+
+			<intent-filter>
+				
+
+				<action android:name="android.intent.action.MAIN">
+</action>
+				
+
+				<category android:name="android.intent.category.LAUNCHER">
+</category>
+				
+
+			</intent-filter>
+			
+
+		</activity>
+		
+
+		<activity android:label="@7F0A0036" android:name="com.kylemsguy.tcasmobile.MainActivity" android:windowSoftInputMode="0x00000012">
+</activity>
+		
+
+	</application>
+	
+
+</manifest>

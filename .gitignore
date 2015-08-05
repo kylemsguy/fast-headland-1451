@@ -1,4 +1,5 @@
 venv
+db/
 .idea/
 *.pyc
 tmp/

@@ -8,7 +8,6 @@ from flask import request
 from flask import render_template
 from flask import session
 from flask import redirect
-from flask import url_for
 
 from secret_key import install_secret_key
 
@@ -33,6 +32,7 @@ def upload_apk():
         return render_template('file_uploaded.html', filename=unique_filename)
     else:
         return redirect('/', code=302)
+
 
 @app.route('/getfile/')
 def get_uploaded_apk():

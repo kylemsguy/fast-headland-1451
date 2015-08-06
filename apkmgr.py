@@ -1,24 +1,30 @@
 import os
-from androguard.core.bytecodes.apk import APK
+import subprocess
 from common import UploadedFile
 
 
-def modify_package_name(upfile_obj, default_path="tmp/"):
-    # TODO: check if upfile_obj is an UploadedFile or just a path
-    assert isinstance(upfile_obj, UploadedFile)
-    # construct path to APK and get APK object
-    apk_path = default_path + upfile_obj.get_uuid() + ".apk"
-    apk_obj = APK(apk_path)
+def single_quote(string):
+    return "'" + string + "'"
 
-    if not apk_obj.is_valid_APK():
+
+def modify_package_name(upfile_obj):
+    # prepare filenames
+    filename = "tmp/" + upfile_obj.get_uuid() + ".apk"
+    new_foldername = "tmp/output/" + upfile_obj.get_uuid() + "/"
+    new_filename = new_foldername + "output" + ".apk"
+
+    os.mkdir(new_foldername)
+    os.rename(filename, new_filename)
+    # rename the package
+    rename_retval = subprocess.call(['ApkRename/apkRename.sh', new_filename, upfile_obj.get_package_name()])
+    if rename_retval != 0:
         upfile_obj.set_status(-1)
-        os.remove(apk_path)
-        return
+        raise RuntimeError("subprocess apkRename.sh returned " + str(rename_retval))
 
-    # modify AndroidManifest.xml
-    manifest_xml = apk_obj.get_AndroidManifest()
-    manifest_element = manifest_xml.documentElement
-    manifest_element.setAttribute('package', upfile_obj.get_package_name())
+    # sign the package
+    sign_retval = subprocess.call(['ApkRename/apkSign.sh', new_filename, 'ApkRename/android.keystore'])
+    if sign_retval != 0:
+        upfile_obj.set_status(-2)
+        raise RuntimeError("subprocess apkSign.sh returned " + str(sign_retval))
 
-
-
+    upfile_obj.set_status(1)

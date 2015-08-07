@@ -3,13 +3,19 @@ import sys
 import os
 import shutil
 import subprocess
-from enum import Enum
+import threading
+from enum import IntEnum
 
 # Global variables
 current_files = {}
+cleanup_thread = None
+last_cleanup = 0
+
+# Mutexes
+current_files_mutex = threading.Lock()
 
 
-class UploadedStatus(Enum):
+class UploadedStatus(IntEnum):
     READY = 0
     PROCESSING = 1
     SUCCESS = 2
@@ -25,6 +31,10 @@ class UploadedFile:
         self._package_name = package_name  # new package name
         self._status = UploadedStatus.READY
         self._timeout = time.time() + 3600 * 5  # 5 hour timeout
+        self._worker = None
+
+    def get_worker(self):
+        return self._worker
 
     def get_uuid(self):
         return self._uuid
@@ -37,6 +47,9 @@ class UploadedFile:
 
     def get_timeout(self):
         return self._timeout
+
+    def set_worker(self, worker):
+        self._worker = worker
 
     def set_timeout(self, timeout):
         self._timeout = timeout
@@ -55,21 +68,39 @@ class UploadedFile:
             raise RuntimeError("apkmgr: Other error occurred")
 
 
+def start_cleanup():
+    global cleanup_thread
+    global last_cleanup
+    if cleanup_thread and cleanup_thread.is_alive():
+        return # already another thread running
+    elif last_cleanup < time.time() - 1800:
+        cleanup_thread = start_threaded(clean_current_files)
+
+
 def clean_current_files():
     """
     Garbage collection for old files or if running out of memory
+    NOTE: Should only be called in a thread
     :return:Nothing
     """
-    for key in current_files.keys():
-        if clean_file(current_files[key]):
-            current_files.pop(key)
-
-    if get_size('tmp') > 1024 * 1024 * 200:  # 200MB
-        # TEMPORARY: ABORT ABORT ABORT
+    current_files_mutex.acquire(True)
+    global last_cleanup
+    last_cleanup = time.time()
+    try:
         for key in current_files.keys():
-            current_files[key].set_timeout(time.time() - 1)
-            clean_file(current_files[key])
-            current_files.pop(key)
+            if clean_file(current_files[key]):
+                current_files.pop(key)
+
+        if get_size('tmp') > 1024 * 1024 * 200:  # 200MB
+            # TEMPORARY: ABORT ABORT ABORT
+            for key in current_files.keys():
+                current_files[key].set_timeout(time.time() - 1)
+                clean_file(current_files[key])
+                current_files.pop(key)
+    except Exception as e:
+        print "clean_current_files: " + e
+    finally:
+        current_files_mutex.release()
 
 
 def clean_file(uploaded_file):
@@ -82,12 +113,23 @@ def clean_file(uploaded_file):
         uploaded_path = "tmp/" + uploaded_file.get_uuid() + ".apk"
         processed_path = "tmp/output/" + uploaded_file.get_uuid() + "/"
         if uploaded_file.get_status() == UploadedStatus.READY:
-            os.remove(uploaded_path)
+            try:
+                os.remove(uploaded_path)
+            except OSError as e:
+                print "clean_file: Unable to delete uploaded file: " + e
         else:
-            shutil.rmtree(processed_path)
+            try:
+                shutil.rmtree(processed_path)
+            except OSError as e:
+                print "clean_file: Unable to delete uploaded file: " + e
         return True
     return False
 
+
+def start_threaded(func, *args):
+    thread = threading.Thread(target=func, args=args)
+    thread.start()
+    return thread
 
 def get_size(start_path='.'):
     total_size = 0
@@ -101,8 +143,8 @@ def get_size(start_path='.'):
 def generate_keystore():
     # generate a keystore using keytool and place it in ApkRename
     if not os.path.isfile("ApkRename/android.keystore"):
-        p = subprocess.Popen('keytool -genkey -v -keystore ApkRename/android.keystore '
-                             '-alias alias_name -keyalg RSA -keysize 2048 -validity 10000',
+        p = subprocess.Popen('keytool -genkey -v -keystore ApkRename/android.keystore ' +
+                             '-alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000',
                              stdin=subprocess.PIPE, shell=True)
         p.communicate(b'android\nandroid\nnobody\nnobody\nnobody\nnowhere\nnowhere\nNW\nyes\n')
 
@@ -128,4 +170,5 @@ def install_secret_key(app, filename='secret_key'):
             if not os.path.isdir(os.path.dirname(filename)):
                 print 'mkdir -p', os.path.dirname(filename)
             print 'head -c 24 /dev/urandom >', filename
+            print 'Or specify the key with the SECRET_KEY environment variable.'
             sys.exit(1)

@@ -9,6 +9,8 @@ def single_quote(string):
 
 
 def modify_package_name(upfile_obj):
+    if upfile_obj.get_status() != UploadedStatus.READY:
+        return # what are you even giving me
     upfile_obj.set_status(UploadedStatus.PROCESSING)
     # prepare filenames
     filename = "tmp/" + upfile_obj.get_uuid() + ".apk"

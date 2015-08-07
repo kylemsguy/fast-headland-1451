@@ -58,9 +58,9 @@ def get_uploaded_apk():
     if uuid in common.current_files:
         reqfile_obj = common.current_files[uuid]
         # return a json with status code
-        retdata = {'Status': reqfile_obj.get_status()}
+        retdata = {'status': reqfile_obj.get_status().value}
         if reqfile_obj.get_status() == common.UploadedStatus.SUCCESS:
-            retdata['url'] = "/getfile/" + reqfile_obj.get_uuid() + "/"
+            retdata['url'] = "/getfile/" + reqfile_obj.get_uuid() + ".apk"
         else:
             retdata['url'] = ""
 

@@ -2,14 +2,15 @@
 <html>
 <head>
     <title>APK Package Changer Proof-of-Concept - File Uploaded</title>
-    <script language="JavaScript" src="js/jquery-1.11.3.min.js"
-    <script language="JavaScript" src="js/waiting.js"></script>
+    <script language="JavaScript" src="/static/js/jquery-1.11.3.min.js"></script>
+    <script language="JavaScript" src="/static/js/waiting.js"></script>
+    <style>
+        #ellipsis {
+            font-weight: bold;
+        }
+    </style>
 </head>
-<body>
-Testing
-<!-- DEBUG -->
-<a href="{{ filename }}">Check status</a>
-<!-- /DEBUG -->
-<input type="hidden" value="{{ filename }}">
+<h1 id="loading">We are now processing your file... Your link will automatically appear when ready<span id="ellipsis"></span></h1>
+<input type="hidden" id="uuid" value="{{ filename }}">
 </body>
 </html>

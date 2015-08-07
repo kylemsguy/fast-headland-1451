@@ -3,14 +3,28 @@ import sys
 import os
 import shutil
 import subprocess
+from enum import Enum
+
+# Global variables
+current_files = {}
+
+
+class UploadedStatus(Enum):
+    READY = 0
+    PROCESSING = 1
+    SUCCESS = 2
+
+    # failure codes are all negative
+    INVALID_FILE = -1
+    OTHER_FAILURE = -2
 
 
 class UploadedFile:
     def __init__(self, uuid, package_name):
         self._uuid = uuid
-        self._package_name = package_name # new package name
-        self._status = 0 # 0 is ready, 1 is success,  -1 is invalid file, -2 is other failure
-        self._timeout = time.time() + 3600 * 5 # 5 hour timeout
+        self._package_name = package_name  # new package name
+        self._status = UploadedStatus.READY
+        self._timeout = time.time() + 3600 * 5  # 5 hour timeout
 
     def get_uuid(self):
         return self._uuid
@@ -41,18 +55,35 @@ class UploadedFile:
             raise RuntimeError("apkmgr: Other error occurred")
 
 
+def clean_current_files():
+    """
+    Garbage collection for old files or if running out of memory
+    :return:Nothing
+    """
+    for key in current_files.keys():
+        if clean_file(current_files[key]):
+            current_files.pop(key)
+
+    if get_size('tmp') > 1024 * 1024 * 200:  # 200MB
+        # TEMPORARY: ABORT ABORT ABORT
+        for key in current_files.keys():
+            current_files[key].set_timeout(time.time() - 1)
+            clean_file(current_files[key])
+            current_files.pop(key)
+
+
 def clean_file(uploaded_file):
     """
-    Cleans up old files
+    Cleans up old files, but does not remove the entry from memory
     :param uploaded_file: object describing the uploaded file
     :return:whether a file was removed
     """
-    if(uploaded_file.get_timeout() <= time.time()):
+    if (uploaded_file.get_timeout() <= time.time()):
         uploaded_path = "tmp/" + uploaded_file.get_uuid() + ".apk"
         processed_path = "tmp/output/" + uploaded_file.get_uuid() + "/"
-        if os.path.isfile(uploaded_path):
+        if uploaded_file.get_status() == UploadedStatus.READY:
             os.remove(uploaded_path)
-        if os.path.isdir(processed_path):
+        else:
             shutil.rmtree(processed_path)
         return True
     return False
@@ -71,7 +102,8 @@ def generate_keystore():
     # generate a keystore using keytool and place it in ApkRename
     if not os.path.isfile("ApkRename/android.keystore"):
         p = subprocess.Popen('keytool -genkey -v -keystore ApkRename/android.keystore '
-             '-alias alias_name -keyalg RSA -keysize 2048 -validity 10000', stdin=subprocess.PIPE, shell=True)
+                             '-alias alias_name -keyalg RSA -keysize 2048 -validity 10000',
+                             stdin=subprocess.PIPE, shell=True)
         p.communicate(b'android\nandroid\nnobody\nnobody\nnobody\nnowhere\nnowhere\nNW\nyes\n')
 
 
